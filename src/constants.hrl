@@ -1,0 +1,4 @@
+-define(S, 4).
+-define(D, 8).
+-define(C, 8).
+-define(Z, 16).
