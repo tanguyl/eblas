@@ -16,4 +16,6 @@ _build
 .idea
 *.iml
 rebar3.crashdump
+debug.txt
+priv
 *~

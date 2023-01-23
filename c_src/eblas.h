@@ -54,7 +54,12 @@ unsigned long hash(char *str);
 int load_ebw(ErlNifEnv* env, void** priv_data, ERL_NIF_TERM load_info);
 ERL_NIF_TERM unwrapper(ErlNifEnv* env, int argc, const ERL_NIF_TERM* argv);
 
-typedef enum BLAS_NAMES {saxpy=210727551034,daxpy=210709762219,caxpy=210708576298,zaxpy=210735852481, blas_name_end=0} blas_names;
+typedef enum BLAS_NAMES {
+    saxpy=210727551034,daxpy=210709762219,caxpy=210708576298,zaxpy=210735852481,
+    scopy=210727613107,dcopy=210709824292,ccopy=210708638371,zcopy=210735914554,
+    blas_name_end=0
+} blas_names;
+
 bytes_sizes pick_size(long hash, blas_names names[], bytes_sizes sizes []);
 
 #endif

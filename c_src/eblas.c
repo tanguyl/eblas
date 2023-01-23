@@ -209,14 +209,18 @@ ERL_NIF_TERM unwrapper(ErlNifEnv* env, int argc, const ERL_NIF_TERM* argv){
 
     
     int error;
+    narg--;
+    elements++;
     unsigned long hash_name = hash(name);
+    debug_write("%s=%lu\n", name, hash_name);
     switch(hash_name){
 
         case saxpy: case daxpy: case caxpy: case zaxpy: {
             int n; cste_c_binary alpha; cste_c_binary x; int incx; c_binary y; int incy;
             bytes_sizes type = pick_size(hash_name, (blas_names []){saxpy, daxpy, caxpy, zaxpy, blas_name_end}, (bytes_sizes[]){s_bytes, d_bytes, c_bytes, z_bytes, no_bytes});
             
-            if( !(error = translate(env, elements+1, (etypes[]) {e_int, e_cste_ptr, e_cste_ptr, e_int, e_ptr, e_int, e_end}, &n, &alpha, &x, &incx, &y, &incy))
+            if( !(error = narg == 6? 0:21)
+                && !(error = translate(env, elements, (etypes[]) {e_int, e_cste_ptr, e_cste_ptr, e_int, e_ptr, e_int, e_end}, &n, &alpha, &x, &incx, &y, &incy))
                 && !(error = (in_cste_bounds(type, 1, alpha) || in_cste_bounds(type, n, x) || in_bounds(type, n, y)))
             )
              switch(hash_name){
@@ -224,20 +228,40 @@ ERL_NIF_TERM unwrapper(ErlNifEnv* env, int argc, const ERL_NIF_TERM* argv){
                 case daxpy: cblas_daxpy(n, *(double*)get_cste_ptr(alpha), get_cste_ptr(x), incx, get_ptr(y), incy); break;
                 case caxpy: cblas_caxpy(n,           get_cste_ptr(alpha), get_cste_ptr(x), incx, get_ptr(y), incy); break;
                 case zaxpy: cblas_zaxpy(n,           get_cste_ptr(alpha), get_cste_ptr(x), incx, get_ptr(y), incy); break;
-                default: error = -1; break;
+                default: error = -2; break;
+            }
+
+        break;}
+
+         case scopy: case dcopy: case ccopy: case zcopy: {
+            int n;  cste_c_binary x; int incx; c_binary y; int incy;
+            bytes_sizes type = pick_size(hash_name, (blas_names []){scopy, dcopy, ccopy, zcopy, blas_name_end}, (bytes_sizes[]){s_bytes, d_bytes, c_bytes, z_bytes, no_bytes});
+            
+            if( !(error = narg == 5? 0:21)
+                && !(error = translate(env, elements, (etypes[]) {e_int, e_cste_ptr, e_int, e_ptr, e_int, e_end}, &n, &x, &incx, &y, &incy))
+                && !(error = (in_cste_bounds(type, n, x) || in_bounds(type, n, y)))
+            )
+             switch(hash_name){
+                case scopy: cblas_scopy(n, get_cste_ptr(x), incx, get_ptr(y), incy); break;
+                case dcopy: cblas_dcopy(n, get_cste_ptr(x), incx, get_ptr(y), incy); break;
+                case ccopy: cblas_ccopy(n, get_cste_ptr(x), incx, get_ptr(y), incy); break;
+                case zcopy: cblas_zcopy(n, get_cste_ptr(x), incx, get_ptr(y), incy); break;
+                default: error = -2; break;
             }
 
         break;}
         
 
         default:
-            debug_write("%s:  %lu,\n", name, hash(name));
             error = -1;
         break;
     }
 
     debug_write("Error: %i\n", error);
     switch(error){
+        case -1:
+            debug_write("%s=%lu,\n", name, hash_name);
+            return enif_raise_exception(env, enif_make_atom(env, "Unknown blas."));
         case 0:         
             return enif_make_atom(env, "ok");
         break;
@@ -248,6 +272,9 @@ ERL_NIF_TERM unwrapper(ErlNifEnv* env, int argc, const ERL_NIF_TERM* argv){
         break;
         case 20:
             return enif_raise_exception(env, enif_make_atom(env, "Array overflow."));
+        break;
+        case 21:
+            return enif_raise_exception(env, enif_make_atom(env, "Invalid number of arguments."));
         break;
 
         default:
