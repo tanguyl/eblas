@@ -126,11 +126,13 @@ int get_cste_binary(ErlNifEnv* env, const ERL_NIF_TERM term, cste_c_binary* resu
 
 int in_bounds(int elem_size, int n_elem, int inc, c_binary b){
     int end_offset = b.offset + (elem_size*n_elem*inc);
+    debug_write("end offset: %i  max offset: %u\n", end_offset, b.offset);
     return (elem_size > 0 && end_offset >= 0 && end_offset <= b.size)? 0:20;
 }
 
 int in_cste_bounds(int elem_size, int n_elem, int inc, cste_c_binary b){
     int end_offset = b.offset + (elem_size*n_elem*inc);
+    debug_write("end offset: %i  max offset: %u\n", end_offset, b.offset);
     return (elem_size > 0 && end_offset >= 0 && end_offset <= b.size)?0:20;
 }
 

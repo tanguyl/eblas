@@ -55,6 +55,19 @@ int load_ebw(ErlNifEnv* env, void** priv_data, ERL_NIF_TERM load_info);
 ERL_NIF_TERM unwrapper(ErlNifEnv* env, int argc, const ERL_NIF_TERM* argv);
 
 typedef enum BLAS_NAMES {
+    saxpy=210727551034,
+    daxpy=210709762219,
+    caxpy=210708576298,
+    zaxpy=210735852481,
+    scopy=210727613107,
+    dcopy=210709824292,
+    ccopy=210708638371,
+    zcopy=210735914554,
+    sswap=210728196307,
+    dswap=210710407492,
+    cswap=210709221571,
+    zswap=210736497754,
+
     srotg=210728152276,
     drotg=210710363461,
     crotg=210709177540,
@@ -77,8 +90,6 @@ typedef enum BLAS_NAMES {
     ddot=6385147280,
     cdotu=210708674436,
     zdotu=210735950619,
-    sdot=6385686335,
-    ddot=6385147280,
     cdotc=210708674418,
     zdotc=210735950601,
     sdsdot=6954012548918,
