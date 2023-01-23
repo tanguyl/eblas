@@ -1,0 +1,16 @@
+Names = [srotg,drotg,crotg,zrotg,
+srotmg,drotmg,
+srot,drot,csrot,zdrot,
+srotm,drotm,
+sswap,dswap,cswap,zswap,
+sscal,dscal,cscal,csscal,zscal,zdscal,
+scopy,dcopy,ccopy,zcopy,
+saxpy,daxpy,caxpy,zaxpy,
+sdot,ddot,cdotu,zdotu,
+sdot,ddot,cdotc,zdotc,
+sdsdot,dsdot,
+snrm2,dnrm2,scnrm2,dznrm2,
+sasum,dasum,scasum,dzasum,
+isamax,idamax,icamax,izamax],
+
+lists:foreach(fun({I,Name}) -> spawn(fun()-> timer:sleep( I*100), eblas:run({Name})end) end, lists:zip(lists:seq(1, length(Names)), Names)).

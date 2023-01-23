@@ -61,7 +61,7 @@ int translate(ErlNifEnv* env, const ERL_NIF_TERM* terms, const etypes* format, .
 //Likely thread unsafe.
 //Usage: debug_write("A double: %lf, an int:%d", double_val, int_val);
 int debug_write(const char* fmt, ...){
-    FILE* fp = fopen("debug.txt", "a");
+    FILE* fp = fopen("priv/debug.txt", "a");
     va_list args;
 
     va_start(args, fmt);
@@ -212,7 +212,7 @@ ERL_NIF_TERM unwrapper(ErlNifEnv* env, int argc, const ERL_NIF_TERM* argv){
     narg--;
     elements++;
     unsigned long hash_name = hash(name);
-    debug_write("%s=%lu\n", name, hash_name);
+    //debug_write("%s=%lu\n", name, hash_name);
     switch(hash_name){
 
         case saxpy: case daxpy: case caxpy: case zaxpy: {
@@ -276,7 +276,6 @@ ERL_NIF_TERM unwrapper(ErlNifEnv* env, int argc, const ERL_NIF_TERM* argv){
         break;
     }
 
-    debug_write("Error: %i\n", error);
     switch(error){
         case -1:
             debug_write("%s=%lu,\n", name, hash_name);
