@@ -112,10 +112,8 @@ int get_cste_binary(ErlNifEnv* env, const ERL_NIF_TERM term, cste_c_binary* resu
         }
         else{
             // Read a double.
-            debug_write("Reading a double.\n");
             if(!enif_get_double(env, term, &result->tmp))
                 return 0;
-            debug_write("Reading succesfull!\n");
 
             result->size    = 64;
             result->offset  = 0;
@@ -128,14 +126,12 @@ int get_cste_binary(ErlNifEnv* env, const ERL_NIF_TERM term, cste_c_binary* resu
 
 int in_bounds(int elem_size, int n_elem, c_binary b){
     int end_offset = b.offset + (elem_size*n_elem);
-    debug_write("End Offset: %i, size: %u\n", end_offset, b.size);
-    return (elem_size > 0 && end_offset >= 0 && end_offset <= b.size)? 0:1;
+    return (elem_size > 0 && end_offset >= 0 && end_offset <= b.size)? 0:20;
 }
 
 int in_cste_bounds(int elem_size, int n_elem, cste_c_binary b){
     int end_offset = b.offset + (elem_size*n_elem);
-    debug_write("End Offset: %i, size: %u\n", end_offset, b.size);
-    return (elem_size > 0 && end_offset >= 0 && end_offset <= b.size)?0:1;
+    return (elem_size > 0 && end_offset >= 0 && end_offset <= b.size)?0:20;
 }
 
 
@@ -240,7 +236,24 @@ ERL_NIF_TERM unwrapper(ErlNifEnv* env, int argc, const ERL_NIF_TERM* argv){
         break;
     }
 
-    return error? enif_make_badarg(env) : enif_make_atom(env, "ok");
+    debug_write("Error: %i\n", error);
+    switch(error){
+        case 0:         
+            return enif_make_atom(env, "ok");
+        break;
+        case 1 ... 19:
+            char buff[50];
+            sprintf(buff, "Could not translate argument %i.", error - 1);
+            return enif_raise_exception(env, enif_make_atom(env, buff));
+        break;
+        case 20:
+            return enif_raise_exception(env, enif_make_atom(env, "Array overflow."));
+        break;
+
+        default:
+            return enif_make_badarg(env);
+        break;
+    }
 }
 
 int load(ErlNifEnv* env, void** priv_data, ERL_NIF_TERM load_info){

@@ -235,3 +235,135 @@ Corrrect format! No issues here whatsoever.
 Unwrapping term number 3
 Unwrapping term number 4
 Unwrapping term number 5
+
+New session
+-----------
+Unwrapping term number 0
+Unwrapping term number 1
+Reading a double.
+Reading succesfull!
+Unwrapping term number 2
+Unwrapping term number 3
+Unwrapping term number 4
+Unwrapping term number 5
+End Offset: 4, size: 64
+End Offset: 12, size: 24
+End Offset: 12, size: 24
+Unwrapping term number 0
+Unwrapping term number 0
+Unwrapping term number 1
+Reading a double.
+Reading succesfull!
+Unwrapping term number 2
+Unwrapping term number 3
+Unwrapping term number 4
+Unwrapping term number 5
+End Offset: 4, size: 64
+End Offset: 4, size: 24
+End Offset: 4, size: 24
+Unwrapping term number 0
+Unwrapping term number 1
+Reading a double.
+Reading succesfull!
+Unwrapping term number 2
+Unwrapping term number 3
+Unwrapping term number 4
+Unwrapping term number 5
+End Offset: 4, size: 64
+End Offset: -4, size: 24
+Unwrapping term number 0
+Unwrapping term number 1
+Reading a double.
+Reading succesfull!
+Unwrapping term number 2
+Unwrapping term number 3
+Unwrapping term number 4
+Unwrapping term number 5
+End Offset: 4, size: 64
+End Offset: 40, size: 24
+Unwrapping term number 0
+Unwrapping term number 1
+Reading a double.
+Reading succesfull!
+Unwrapping term number 2
+Unwrapping term number 3
+Unwrapping term number 4
+Unwrapping term number 5
+End Offset: 4, size: 64
+End Offset: 4, size: 24
+End Offset: 4, size: 24
+Unwrapping term number 0
+Unwrapping term number 1
+Reading a double.
+Reading succesfull!
+Unwrapping term number 2
+Unwrapping term number 3
+Unwrapping term number 4
+Unwrapping term number 5
+End Offset: 4, size: 64
+End Offset: 12, size: 24
+End Offset: 12, size: 24
+
+New session
+-----------
+Unwrapping term number 0
+Unwrapping term number 1
+Reading a double.
+Reading succesfull!
+Unwrapping term number 2
+Unwrapping term number 3
+Unwrapping term number 4
+Unwrapping term number 5
+End Offset: 4, size: 64
+End Offset: 12, size: 24
+End Offset: 12, size: 24
+Error: 0
+Unwrapping term number 0
+Unwrapping term number 1
+Reading a double.
+Reading succesfull!
+Unwrapping term number 2
+Unwrapping term number 3
+Unwrapping term number 4
+Unwrapping term number 5
+End Offset: 4, size: 64
+End Offset: 40, size: 24
+Error: 1
+Unwrapping term number 0
+Unwrapping term number 1
+Reading a double.
+Reading succesfull!
+Unwrapping term number 2
+Unwrapping term number 3
+Error: 4
+Unwrapping term number 0
+Unwrapping term number 1
+Reading a double.
+Reading succesfull!
+Unwrapping term number 2
+Unwrapping term number 3
+Error: 4
+Unwrapping term number 0
+Unwrapping term number 1
+Reading a double.
+Reading succesfull!
+Unwrapping term number 2
+Unwrapping term number 3
+Unwrapping term number 4
+Unwrapping term number 5
+End Offset: 4, size: 64
+End Offset: 24, size: 24
+End Offset: 24, size: 24
+Error: 0
+Unwrapping term number 0
+Unwrapping term number 1
+Reading a double.
+Reading succesfull!
+Unwrapping term number 2
+Unwrapping term number 3
+Unwrapping term number 4
+Unwrapping term number 5
+End Offset: 4, size: 64
+End Offset: 24, size: 24
+End Offset: 24, size: 24
+Error: 0
