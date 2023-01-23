@@ -124,13 +124,13 @@ int get_cste_binary(ErlNifEnv* env, const ERL_NIF_TERM term, cste_c_binary* resu
 }
 
 
-int in_bounds(int elem_size, int n_elem, c_binary b){
-    int end_offset = b.offset + (elem_size*n_elem);
+int in_bounds(int elem_size, int n_elem, int inc, c_binary b){
+    int end_offset = b.offset + (elem_size*n_elem*inc);
     return (elem_size > 0 && end_offset >= 0 && end_offset <= b.size)? 0:20;
 }
 
-int in_cste_bounds(int elem_size, int n_elem, cste_c_binary b){
-    int end_offset = b.offset + (elem_size*n_elem);
+int in_cste_bounds(int elem_size, int n_elem, int inc, cste_c_binary b){
+    int end_offset = b.offset + (elem_size*n_elem*inc);
     return (elem_size > 0 && end_offset >= 0 && end_offset <= b.size)?0:20;
 }
 
@@ -221,7 +221,7 @@ ERL_NIF_TERM unwrapper(ErlNifEnv* env, int argc, const ERL_NIF_TERM* argv){
             
             if( !(error = narg == 6? 0:21)
                 && !(error = translate(env, elements, (etypes[]) {e_int, e_cste_ptr, e_cste_ptr, e_int, e_ptr, e_int, e_end}, &n, &alpha, &x, &incx, &y, &incy))
-                && !(error = (in_cste_bounds(type, 1, alpha) || in_cste_bounds(type, n, x) || in_bounds(type, n, y)))
+                && !(error = in_cste_bounds(type, 1, 1, alpha)) && !(error = in_cste_bounds(type, n, incx, x))  && !(error = in_bounds(type, n, incy, y))
             )
              switch(hash_name){
                 case saxpy: cblas_saxpy(n, *(double*)get_cste_ptr(alpha), get_cste_ptr(x), incx, get_ptr(y), incy); break;
@@ -239,7 +239,7 @@ ERL_NIF_TERM unwrapper(ErlNifEnv* env, int argc, const ERL_NIF_TERM* argv){
             
             if( !(error = narg == 5? 0:21)
                 && !(error = translate(env, elements, (etypes[]) {e_int, e_cste_ptr, e_int, e_ptr, e_int, e_end}, &n, &x, &incx, &y, &incy))
-                && !(error = (in_cste_bounds(type, n, x) || in_bounds(type, n, y)))
+                && !(error = in_cste_bounds(type, n, incx, x)) && !(error = in_bounds(type, n, incy, y))
             )
              switch(hash_name){
                 case scopy: cblas_scopy(n, get_cste_ptr(x), incx, get_ptr(y), incy); break;

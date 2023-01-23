@@ -21,7 +21,7 @@ typedef struct{
 
 inline void* get_ptr(c_binary cb){return (void*) cb.ptr + cb.offset;}
 int get_c_binary(ErlNifEnv* env, const ERL_NIF_TERM term, c_binary* result);
-int in_bounds(int elem_size, int n_elem, c_binary b);
+int in_bounds(int elem_size, int n_elem, int inc, c_binary b);
 
 typedef struct{
     unsigned int size;
@@ -32,7 +32,7 @@ typedef struct{
 
 inline const void* get_cste_ptr(cste_c_binary cb){return (void*) cb.ptr + cb.offset;}
 int get_cste_binary(ErlNifEnv* env, const ERL_NIF_TERM term, cste_c_binary* result);
-int in_cste_bounds(int elem_size, int n_elem, cste_c_binary b);
+int in_cste_bounds(int elem_size, int n_elem, int inc, cste_c_binary b);
 
 // Private stuff
 int debug_write(const char* fmt, ...);
