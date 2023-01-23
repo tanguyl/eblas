@@ -57,6 +57,7 @@ ERL_NIF_TERM unwrapper(ErlNifEnv* env, int argc, const ERL_NIF_TERM* argv);
 typedef enum BLAS_NAMES {
     saxpy=210727551034,daxpy=210709762219,caxpy=210708576298,zaxpy=210735852481,
     scopy=210727613107,dcopy=210709824292,ccopy=210708638371,zcopy=210735914554,
+    sswap=210728196307, dswap=210710407492, cswap=210709221571, zswap=210736497754,
     blas_name_end=0
 } blas_names;
 

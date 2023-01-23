@@ -233,15 +233,15 @@ ERL_NIF_TERM unwrapper(ErlNifEnv* env, int argc, const ERL_NIF_TERM* argv){
 
         break;}
 
-         case scopy: case dcopy: case ccopy: case zcopy: {
+        case scopy: case dcopy: case ccopy: case zcopy:  {
             int n;  cste_c_binary x; int incx; c_binary y; int incy;
-            bytes_sizes type = pick_size(hash_name, (blas_names []){scopy, dcopy, ccopy, zcopy, blas_name_end}, (bytes_sizes[]){s_bytes, d_bytes, c_bytes, z_bytes, no_bytes});
+            bytes_sizes type = pick_size(hash_name, (blas_names []){scopy, dcopy, ccopy, zcopy,  blas_name_end}, (bytes_sizes[]){s_bytes, d_bytes, c_bytes, z_bytes, no_bytes});
             
             if( !(error = narg == 5? 0:21)
                 && !(error = translate(env, elements, (etypes[]) {e_int, e_cste_ptr, e_int, e_ptr, e_int, e_end}, &n, &x, &incx, &y, &incy))
                 && !(error = in_cste_bounds(type, n, incx, x)) && !(error = in_bounds(type, n, incy, y))
             )
-             switch(hash_name){
+            switch(hash_name){
                 case scopy: cblas_scopy(n, get_cste_ptr(x), incx, get_ptr(y), incy); break;
                 case dcopy: cblas_dcopy(n, get_cste_ptr(x), incx, get_ptr(y), incy); break;
                 case ccopy: cblas_ccopy(n, get_cste_ptr(x), incx, get_ptr(y), incy); break;
@@ -250,7 +250,26 @@ ERL_NIF_TERM unwrapper(ErlNifEnv* env, int argc, const ERL_NIF_TERM* argv){
             }
 
         break;}
-        
+
+        case sswap: case dswap: case cswap: case zswap:  {
+            int n;  c_binary x; int incx; c_binary y; int incy;
+            bytes_sizes type = pick_size(hash_name, (blas_names []){sswap, dswap, cswap, zswap, blas_name_end}, (bytes_sizes[]){s_bytes, d_bytes, c_bytes, z_bytes, no_bytes});
+            
+            if( !(error = narg == 5? 0:21)
+                && !(error = translate(env, elements, (etypes[]) {e_int, e_ptr, e_int, e_ptr, e_int, e_end}, &n, &x, &incx, &y, &incy))
+                && !(error = in_bounds(type, n, incx, x)) && !(error = in_bounds(type, n, incy, y))
+            )
+            switch(hash_name){
+                case sswap: cblas_sswap(n, get_ptr(x), incx, get_ptr(y), incy); break;
+                case dswap: cblas_dswap(n, get_ptr(x), incx, get_ptr(y), incy); break;
+                case cswap: cblas_cswap(n, get_ptr(x), incx, get_ptr(y), incy); break;
+                case zswap: cblas_zcopy(n, get_ptr(x), incx, get_ptr(y), incy); break;
+                default: error = -2; break;
+            }
+            
+        break;}
+
+
 
         default:
             error = -1;
