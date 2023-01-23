@@ -90,8 +90,10 @@ int get_c_binary(ErlNifEnv* env, const ERL_NIF_TERM term, c_binary* result){
     return b;
 }
 
+// *UnIVeRSAl pointer to an erlang type; currently, binary/double/c_binarry.
 int get_cste_binary(ErlNifEnv* env, const ERL_NIF_TERM term, cste_c_binary* result){
     if(enif_is_binary(env, term)){
+        // Read a binary.
         ErlNifBinary ebin;
         if(!enif_inspect_binary(env, term, &ebin))
             return 0;
@@ -101,16 +103,41 @@ int get_cste_binary(ErlNifEnv* env, const ERL_NIF_TERM term, cste_c_binary* resu
         result->ptr     = ebin.data;
     }
     else{
+        // Read a cbin.
         c_binary cbin;
-        if(!get_c_binary(env, term, &cbin))
-            return 0;
+        if(get_c_binary(env, term, &cbin)){
+            result->size    = cbin.size;
+            result->offset  = cbin.offset;
+            result->ptr     = (const unsigned char*) cbin.ptr;
+        }
+        else{
+            // Read a double.
+            debug_write("Reading a double.\n");
+            if(!enif_get_double(env, term, &result->tmp))
+                return 0;
+            debug_write("Reading succesfull!\n");
 
-        result->size    = cbin.size;
-        result->offset  = cbin.offset;
-        result->ptr     = (const unsigned char*) cbin.ptr;
+            result->size    = 64;
+            result->offset  = 0;
+            result->ptr     = (const unsigned char*) &result->tmp;
+        }
     }
     return 1;
 }
+
+
+int in_bounds(int elem_size, int n_elem, c_binary b){
+    int end_offset = b.offset + (elem_size*n_elem);
+    debug_write("End Offset: %i, size: %u\n", end_offset, b.size);
+    return (elem_size > 0 && end_offset >= 0 && end_offset <= b.size)? 0:1;
+}
+
+int in_cste_bounds(int elem_size, int n_elem, cste_c_binary b){
+    int end_offset = b.offset + (elem_size*n_elem);
+    debug_write("End Offset: %i, size: %u\n", end_offset, b.size);
+    return (elem_size > 0 && end_offset >= 0 && end_offset <= b.size)?0:1;
+}
+
 
 
 ERL_NIF_TERM new(ErlNifEnv* env, int argc, const ERL_NIF_TERM* argv){
@@ -164,6 +191,15 @@ unsigned long hash(char *str){
 }
 
 
+bytes_sizes pick_size(long hash, blas_names names[], bytes_sizes sizes []){
+    for(int curr=0; names[curr] != blas_name_end; curr++)
+        if(names[curr]==hash)
+            return sizes[curr];
+    
+    return 0;
+}
+
+
 ERL_NIF_TERM unwrapper(ErlNifEnv* env, int argc, const ERL_NIF_TERM* argv){
     int narg;
     const ERL_NIF_TERM* elements;
@@ -177,27 +213,26 @@ ERL_NIF_TERM unwrapper(ErlNifEnv* env, int argc, const ERL_NIF_TERM* argv){
 
     
     int error;
-    switch(hash(name)){
-        case saxpy: {
-            int n; float da; cste_c_binary dx; int incx; c_binary dy; int incy;
-            if( !(error = translate(env, elements+1, (etypes[]) {e_int, e_float, e_cste_ptr, e_int, e_ptr, e_int, e_end}, &n, &da, &dx, &incx, &dy, &incy)))  
-                cblas_saxpy(n, da, get_cste_ptr(dx), incx, get_ptr(dy), incy);
-        break; }
-        case daxpy: {
-            int n; double da; cste_c_binary dx; int incx; c_binary dy; int incy;
-            if( !(error = translate(env, elements+1, (etypes[]) {e_int, e_double, e_cste_ptr, e_int, e_ptr, e_int, e_end}, &n, &da, &dx, &incx, &dy, &incy)))  
-                cblas_daxpy(n, da, get_cste_ptr(dx), incx, get_ptr(dy), incy);
-        break; }
-        case caxpy: {
-            int n; cste_c_binary da; cste_c_binary dx; int incx; c_binary dy; int incy;
-            if( !(error = translate(env, elements+1, (etypes[]) {e_int, e_cste_ptr, e_cste_ptr, e_int, e_ptr, e_int, e_end}, &n, &da, &dx, &incx, &dy, &incy)))  
-                cblas_caxpy(n, get_cste_ptr(da), get_cste_ptr(dx), incx, get_ptr(dy), incy);
-        break; }
-        case zaxpy: {
-            int n; cste_c_binary da; cste_c_binary dx; int incx; c_binary dy; int incy;
-            if( !(error = translate(env, elements+1, (etypes[]) {e_int, e_cste_ptr, e_cste_ptr, e_int, e_ptr, e_int, e_end}, &n, &da, &dx, &incx, &dy, &incy)))  
-                cblas_zaxpy(n, get_cste_ptr(da), get_cste_ptr(dx), incx, get_ptr(dy), incy);
-        break; }
+    unsigned long hash_name = hash(name);
+    switch(hash_name){
+
+        case saxpy: case daxpy: case caxpy: case zaxpy: {
+            int n; cste_c_binary alpha; cste_c_binary x; int incx; c_binary y; int incy;
+            bytes_sizes type = pick_size(hash_name, (blas_names []){saxpy, daxpy, caxpy, zaxpy, blas_name_end}, (bytes_sizes[]){s_bytes, d_bytes, c_bytes, z_bytes, no_bytes});
+            
+            if( !(error = translate(env, elements+1, (etypes[]) {e_int, e_cste_ptr, e_cste_ptr, e_int, e_ptr, e_int, e_end}, &n, &alpha, &x, &incx, &y, &incy))
+                && !(error = (in_cste_bounds(type, 1, alpha) || in_cste_bounds(type, n, x) || in_bounds(type, n, y)))
+            )
+             switch(hash_name){
+                case saxpy: cblas_saxpy(n, *(double*)get_cste_ptr(alpha), get_cste_ptr(x), incx, get_ptr(y), incy); break;
+                case daxpy: cblas_daxpy(n, *(double*)get_cste_ptr(alpha), get_cste_ptr(x), incx, get_ptr(y), incy); break;
+                case caxpy: cblas_caxpy(n,           get_cste_ptr(alpha), get_cste_ptr(x), incx, get_ptr(y), incy); break;
+                case zaxpy: cblas_zaxpy(n,           get_cste_ptr(alpha), get_cste_ptr(x), incx, get_ptr(y), incy); break;
+                default: error = -1; break;
+            }
+
+        break;}
+        
 
         default:
             debug_write("%s:  %lu,\n", name, hash(name));
