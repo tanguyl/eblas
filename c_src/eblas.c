@@ -442,10 +442,42 @@ ERL_NIF_TERM unwrapper(ErlNifEnv* env, int argc, const ERL_NIF_TERM* argv){
                 && !(error = in_bounds(type, 1, 1, a)) && !(error = in_bounds(type, 1, 1, b)) && !(error = in_bounds(type, 1, 1, c)) && !(error = in_bounds(type, 1, 1, s))
             )
             switch(hash_name){
-                case srotg: cblas_srotg(get_ptr(a), get_ptr(b), get_ptr(c), get_ptr(s));  break;
+                case srotg: cblas_srotg(get_ptr(a), get_ptr(b), get_ptr(c), get_ptr(s)); break;
                 case drotg: cblas_drotg(get_ptr(a), get_ptr(b), get_ptr(c), get_ptr(s)); break;
                 case crotg: cblas_crotg(get_ptr(a), get_ptr(b), get_ptr(c), get_ptr(s)); break;
                 case zrotg: cblas_zrotg(get_ptr(a), get_ptr(b), get_ptr(c), get_ptr(s)); break;
+                default: error = -2; break;
+            }
+            
+        break;}
+
+        case srotm: case drotm:  {
+            int n; c_binary x; int incx; c_binary y; int incy; cste_c_binary param;
+            bytes_sizes type = pick_size(hash_name, (blas_names []){srotm, drotm, blas_name_end}, (bytes_sizes[]){s_bytes, d_bytes, no_bytes});
+            
+            if( !(error = narg == 6? 0:21)
+                && !(error = translate(env, elements, (etypes[]) {e_int, e_ptr, e_int, e_ptr, e_int, e_cste_ptr, e_end}, &n, &x, &incx, &y, &incy, &param))
+                && !(error = in_bounds(type, n, incx, x)) && !(error = in_bounds(type, n, incy, y)) && !(error = in_cste_bounds(type, 5, 1, param))
+            )
+            switch(hash_name){
+                case srotm: cblas_srotm(n, get_ptr(x), incx, get_ptr(y), incy, get_cste_ptr(param)); break;
+                case drotm: cblas_srotm(n, get_ptr(x), incx, get_ptr(y), incy, get_cste_ptr(param)); break;
+                default: error = -2; break;
+            }
+            
+        break;}
+
+        case srotmg: case drotmg:  {
+            c_binary d1; c_binary d2; c_binary b1; cste_c_binary b2; c_binary param;
+            bytes_sizes type = pick_size(hash_name, (blas_names []){srotmg, drotmg, blas_name_end}, (bytes_sizes[]){s_bytes, d_bytes, no_bytes});
+            
+            if( !(error = narg == 5? 0:21)
+                && !(error = translate(env, elements, (etypes[]) {e_ptr, e_ptr, e_ptr, e_cste_ptr, e_ptr, e_end}, &d1, &d2, &b1, &b2, &param))
+                && !(error = in_bounds(type, 1, 1, d1)) && !(error = in_bounds(type, 1, 1, d2)) && !(error = in_bounds(type, 1, 1, b1)) && !(error = in_cste_bounds(type, 1, 1, b2)) && !(error = in_bounds(type, 5, 1, param))
+            )
+            switch(hash_name){
+                case srotmg: cblas_srotmg(get_ptr(d1), get_ptr(d2), get_ptr(b1), *(float*) get_cste_ptr(b2),  get_ptr(param)); break;
+                case drotmg: cblas_srotmg(get_ptr(d1), get_ptr(d2), get_ptr(b1), *(double*)get_cste_ptr(b2),  get_ptr(param)); break;
                 default: error = -2; break;
             }
             
