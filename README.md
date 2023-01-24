@@ -12,6 +12,8 @@ Usage
 ----
 Xs = eblas:new(chain:ltb(s, [1,2,1,3,1,4])).
 Ys = eblas:new(chain:ltb(s, [1,2,3,4,5,6])).
+eblas:run({sdot, 3, Xs, 1, Ys, 1}).
+eblas:run({sdsdot, 3, 5, Xs, 1, Ys, 1}).
 
 eblas:run({saxpy, 3, 1.0, Xs, 1, Ys, 1}).
 
@@ -22,6 +24,7 @@ _axpy
 _copy
 _swap
 _scal
+_dot
 
 Todo
 ----
@@ -29,9 +32,6 @@ _rot
 _rotg
 _rotm
 _rotmg
-_dot
-_dotu
-_dotc
 _nrm2
 _asum
 i_amax

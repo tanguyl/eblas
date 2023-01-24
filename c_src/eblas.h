@@ -34,6 +34,10 @@ inline const void* get_cste_ptr(cste_c_binary cb){return (void*) cb.ptr + cb.off
 int get_cste_binary(ErlNifEnv* env, const ERL_NIF_TERM term, cste_c_binary* result);
 int in_cste_bounds(int elem_size, int n_elem, int inc, cste_c_binary b);
 
+void set_cste_c_binary(cste_c_binary* ccb, bytes_sizes size, unsigned char* ptr);
+ERL_NIF_TERM cste_c_binary_to_term(ErlNifEnv* env, cste_c_binary ccb);
+
+
 // Private stuff
 int debug_write(const char* fmt, ...);
 ErlNifResourceType *c_binary_resource;
@@ -67,6 +71,20 @@ typedef enum BLAS_NAMES {
     dswap=210710407492,
     cswap=210709221571,
     zswap=210736497754,
+    sscal=210728174523,
+    dscal=210710385708,
+    cscal=210709199787,
+    csscal=6953404169886,
+    zscal=210736475970,
+    zdscal=6954286495110,
+    sdot=6385686335,
+    ddot=6385147280,
+    cdotu=210708674436,
+    zdotu=210735950619,
+    cdotc=210708674418,
+    zdotc=210735950601,
+    dsdot=210710387267,
+    sdsdot=6954012548918,
 
     srotg=210728152276,
     drotg=210710363461,
@@ -81,22 +99,6 @@ typedef enum BLAS_NAMES {
     srotm=210728152282,
     drotm=210710363467,
 
-    sscal=210728174523,
-    dscal=210710385708,
-    cscal=210709199787,
-    csscal=6953404169886,
-    zscal=210736475970,
-    zdscal=6954286495110,
-
-    sdot=6385686335,
-    ddot=6385147280,
-    cdotu=210708674436,
-    zdotu=210735950619,
-    cdotc=210708674418,
-    zdotc=210735950601,
-    sdsdot=6954012548918,
-    dsdot=210710387267,
-
     snrm2=210728011511,
     dnrm2=210710222696,
     scnrm2=6954011198426,
@@ -109,7 +111,7 @@ typedef enum BLAS_NAMES {
     idamax=6953620557465,
     icamax=6953619371544,
     izamax=6953646647727,
-    
+
     blas_name_end=0
 } blas_names;
 

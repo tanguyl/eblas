@@ -1,7 +1,7 @@
 #include "eblas.h"
 #include "string.h"
 #include <cblas.h>
-
+#include <complex.h>
 #include "string.h"
 
 //Various utility functions
@@ -126,14 +126,37 @@ int get_cste_binary(ErlNifEnv* env, const ERL_NIF_TERM term, cste_c_binary* resu
 
 int in_bounds(int elem_size, int n_elem, int inc, c_binary b){
     int end_offset = b.offset + (elem_size*n_elem*inc);
-    debug_write("end offset: %i  max offset: %u\n", end_offset, b.offset);
+    debug_write("end max offset: %i  offset: %u\n", end_offset, b.size);
     return (elem_size > 0 && end_offset >= 0 && end_offset <= b.size)? 0:20;
 }
 
 int in_cste_bounds(int elem_size, int n_elem, int inc, cste_c_binary b){
     int end_offset = b.offset + (elem_size*n_elem*inc);
-    debug_write("end offset: %i  max offset: %u\n", end_offset, b.offset);
+    debug_write("end max offset: %i  offset: %u\n", end_offset, b.size);
     return (elem_size > 0 && end_offset >= 0 && end_offset <= b.size)?0:20;
+}
+
+void set_cste_c_binary(cste_c_binary *ccb, bytes_sizes type, unsigned char* ptr){
+    ccb->size   = type;
+    ccb->offset = 0;
+    ccb->ptr    = ptr;
+}
+
+ERL_NIF_TERM cste_c_binary_to_term(ErlNifEnv* env, cste_c_binary ccb){
+    ErlNifBinary bin;
+    ERL_NIF_TERM result;
+
+    debug_write("Creating binarry...\n");
+    if(enif_alloc_binary(ccb.size, &bin)){
+        memcpy(bin.data, ccb.ptr, ccb.size);
+        debug_write("FInished copying!\n");
+        if((result = enif_make_binary(env, &bin)))
+            return result;
+        else
+            enif_release_binary(&bin);
+    }
+
+    return enif_make_badarg(env);
 }
 
 
@@ -214,6 +237,7 @@ ERL_NIF_TERM unwrapper(ErlNifEnv* env, int argc, const ERL_NIF_TERM* argv){
     narg--;
     elements++;
     unsigned long hash_name = hash(name);
+    ERL_NIF_TERM result = 0;
     //debug_write("%s=%lu\n", name, hash_name);
     switch(hash_name){
 
@@ -271,7 +295,7 @@ ERL_NIF_TERM unwrapper(ErlNifEnv* env, int argc, const ERL_NIF_TERM* argv){
             
         break;}
 
-         case sscal: case dscal: case cscal: case zscal: case csscal: case zdscal:  {
+        case sscal: case dscal: case cscal: case zscal: case csscal: case zdscal:  {
             int n;  cste_c_binary alpha; c_binary x; int incx;
             bytes_sizes type = pick_size(hash_name, (blas_names []){sscal, dscal, cscal, zscal,  csscal, zdscal, blas_name_end}, (bytes_sizes[]){s_bytes, d_bytes, c_bytes, z_bytes, c_bytes, z_bytes, no_bytes});
             
@@ -291,7 +315,45 @@ ERL_NIF_TERM unwrapper(ErlNifEnv* env, int argc, const ERL_NIF_TERM* argv){
             
         break;}
 
-        
+        case sdot: case ddot: case dsdot: case cdotu: case zdotu: case cdotc: case zdotc: {
+            cste_c_binary dot_result;
+
+            int n;  cste_c_binary x; int incx; cste_c_binary y; int incy;
+            bytes_sizes type = pick_size(hash_name, (blas_names []){sdot, ddot, dsdot, cdotu, zdotu, cdotc, zdotc, blas_name_end}, (bytes_sizes[]){s_bytes, d_bytes, s_bytes, c_bytes, z_bytes, c_bytes, z_bytes, no_bytes});
+            
+            if( !(error = narg == 5? 0:21)
+                && !(error = translate(env, elements, (etypes[]) {e_int, e_cste_ptr, e_int, e_cste_ptr, e_int, e_end}, &n, &x, &incx, &y, &incy))
+                && !(error = in_cste_bounds(type, n, incx, x) ) && !(error = in_cste_bounds(type, n, incy, y))
+            )
+            switch(hash_name){
+                case sdot:                   float  f_result  = cblas_sdot (n, get_cste_ptr(x), incx, get_cste_ptr(y), incy); set_cste_c_binary(&dot_result, type, (unsigned char*) &f_result);  break;
+                case ddot:                   double d_result  = cblas_ddot (n, get_cste_ptr(x), incx, get_cste_ptr(y), incy); set_cste_c_binary(&dot_result, type, (unsigned char*) &d_result);  break;
+                case dsdot:                  double ds_result = cblas_dsdot(n, get_cste_ptr(x), incx, get_cste_ptr(y), incy); set_cste_c_binary(&dot_result, type, (unsigned char*) &ds_result); break;
+                case cdotu: openblas_complex_float  c_result  = cblas_cdotu(n, get_cste_ptr(x), incx, get_cste_ptr(y), incy); set_cste_c_binary(&dot_result, type, (unsigned char*) &c_result);  break;
+                case zdotu: openblas_complex_double z_result  = cblas_zdotu(n, get_cste_ptr(x), incx, get_cste_ptr(y), incy); set_cste_c_binary(&dot_result, type, (unsigned char*) &z_result);  break;
+                case cdotc: openblas_complex_float  cd_result = cblas_cdotc(n, get_cste_ptr(x), incx, get_cste_ptr(y), incy); set_cste_c_binary(&dot_result, type, (unsigned char*) &cd_result); break;
+                case zdotc: openblas_complex_double zd_result = cblas_zdotc(n, get_cste_ptr(x), incx, get_cste_ptr(y), incy); set_cste_c_binary(&dot_result, type, (unsigned char*) &zd_result); break;
+                default: error = -2; break;
+            }
+
+            result = cste_c_binary_to_term(env, dot_result);
+            
+        break;}
+
+        case sdsdot: {
+            cste_c_binary dot_result;
+
+            int n;  cste_c_binary b; cste_c_binary x; int incx; cste_c_binary y; int incy;
+            bytes_sizes type = s_bytes;
+            
+            if( !(error = narg == 6? 0:21)
+                && !(error = translate(env, elements, (etypes[]) {e_int, e_cste_ptr, e_cste_ptr, e_int, e_cste_ptr, e_int, e_end}, &n, &b, &x, &incx, &y, &incy))
+                && !(error = in_cste_bounds(type, n, incx, x) ) && !(error = in_cste_bounds(type, n, incy, y))
+            ){
+                float f_result  = cblas_sdsdot (n, *(double*) get_cste_ptr(b), get_cste_ptr(x), incx, get_cste_ptr(y), incy); set_cste_c_binary(&dot_result, type, (unsigned char*) &f_result);
+                result = cste_c_binary_to_term(env, dot_result);
+            }
+        break;}
 
 
         default:
@@ -303,8 +365,8 @@ ERL_NIF_TERM unwrapper(ErlNifEnv* env, int argc, const ERL_NIF_TERM* argv){
         case -1:
             debug_write("%s=%lu,\n", name, hash_name);
             return enif_raise_exception(env, enif_make_atom(env, "Unknown blas."));
-        case 0:         
-            return enif_make_atom(env, "ok");
+        case 0:
+            return !result? enif_make_atom(env, "ok"): result;
         break;
         case 1 ... 19:
             char buff[50];
