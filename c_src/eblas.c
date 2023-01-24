@@ -415,6 +415,24 @@ ERL_NIF_TERM unwrapper(ErlNifEnv* env, int argc, const ERL_NIF_TERM* argv){
             
         break;}
 
+        case srot: case drot: case csrot: case zdrot:  {
+            int n;  c_binary x; int incx; c_binary y; int incy; cste_c_binary c; cste_c_binary s;
+            bytes_sizes type = pick_size(hash_name, (blas_names []){srot, drot, csrot, zdrot, blas_name_end}, (bytes_sizes[]){s_bytes, d_bytes, c_bytes, z_bytes, no_bytes});
+            
+            if( !(error = narg == 7? 0:21)
+                && !(error = translate(env, elements, (etypes[]) {e_int, e_ptr, e_int, e_ptr, e_int, e_cste_ptr, e_cste_ptr, e_end}, &n, &x, &incx, &y, &incy, &c, &s))
+                && !(error = in_bounds(type, n, incx, x)) && !(error = in_bounds(type, n, incy, y))
+            )
+            switch(hash_name){
+                case srot:  cblas_srot(n, get_ptr(x), incx, get_ptr(y), incy, *(float*)  get_cste_ptr(c), *(float*)  get_cste_ptr(s)); break;
+                case drot:  cblas_drot(n, get_ptr(x), incx, get_ptr(y), incy, *(double*) get_cste_ptr(c), *(double*) get_cste_ptr(s)) ; break;
+                case csrot: cblas_csrot(n, get_ptr(x), incx, get_ptr(y), incy, *(float*)  get_cste_ptr(c), *(float*)  get_cste_ptr(s)); break;
+                case zdrot: cblas_zdrot(n, get_ptr(x), incx, get_ptr(y), incy, *(double*) get_cste_ptr(c), *(double*) get_cste_ptr(s)); break;
+                default: error = -2; break;
+            }
+            
+        break;}
+
         default:
             error = -1;
         break;
