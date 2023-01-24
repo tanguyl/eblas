@@ -508,6 +508,7 @@ ERL_NIF_TERM unwrapper(ErlNifEnv* env, int argc, const ERL_NIF_TERM* argv){
         break;
 
         default:
+            debug_write("In default errror.\n");
             return enif_make_badarg(env);
         break;
     }
