@@ -80,12 +80,14 @@ typedef enum BLAS_NAMES {
     zdrot=210735953720,
     srotm=210728152282,
     drotm=210710363467,
+
     sscal=210728174523,
     dscal=210710385708,
     cscal=210709199787,
     csscal=6953404169886,
     zscal=210736475970,
     zdscal=6954286495110,
+
     sdot=6385686335,
     ddot=6385147280,
     cdotu=210708674436,
@@ -94,6 +96,7 @@ typedef enum BLAS_NAMES {
     zdotc=210735950601,
     sdsdot=6954012548918,
     dsdot=210710387267,
+
     snrm2=210728011511,
     dnrm2=210710222696,
     scnrm2=6954011198426,
@@ -106,6 +109,7 @@ typedef enum BLAS_NAMES {
     idamax=6953620557465,
     icamax=6953619371544,
     izamax=6953646647727,
+    
     blas_name_end=0
 } blas_names;
 

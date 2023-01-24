@@ -21,6 +21,7 @@ Available
 _axpy 
 _copy
 _swap
+_scal
 
 Todo
 ----

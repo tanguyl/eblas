@@ -115,7 +115,7 @@ int get_cste_binary(ErlNifEnv* env, const ERL_NIF_TERM term, cste_c_binary* resu
             if(!enif_get_double(env, term, &result->tmp))
                 return 0;
 
-            result->size    = 64;
+            result->size    = 8;
             result->offset  = 0;
             result->ptr     = (const unsigned char*) &result->tmp;
         }
@@ -265,12 +265,33 @@ ERL_NIF_TERM unwrapper(ErlNifEnv* env, int argc, const ERL_NIF_TERM* argv){
                 case sswap: cblas_sswap(n, get_ptr(x), incx, get_ptr(y), incy); break;
                 case dswap: cblas_dswap(n, get_ptr(x), incx, get_ptr(y), incy); break;
                 case cswap: cblas_cswap(n, get_ptr(x), incx, get_ptr(y), incy); break;
-                case zswap: cblas_zcopy(n, get_ptr(x), incx, get_ptr(y), incy); break;
+                case zswap: cblas_zswap(n, get_ptr(x), incx, get_ptr(y), incy); break;
                 default: error = -2; break;
             }
             
         break;}
 
+         case sscal: case dscal: case cscal: case zscal: case csscal: case zdscal:  {
+            int n;  cste_c_binary alpha; c_binary x; int incx;
+            bytes_sizes type = pick_size(hash_name, (blas_names []){sscal, dscal, cscal, zscal,  csscal, zdscal, blas_name_end}, (bytes_sizes[]){s_bytes, d_bytes, c_bytes, z_bytes, c_bytes, z_bytes, no_bytes});
+            
+            if( !(error = narg == 4? 0:21)
+                && !(error = translate(env, elements, (etypes[]) {e_int, e_cste_ptr, e_ptr, e_int, e_end}, &n, &alpha, &x, &incx))
+                && !(error = in_cste_bounds(type, 1, 1, alpha) ) && !(error = in_bounds(type, n, incx, x))
+            )
+            switch(hash_name){
+                case sscal:  cblas_sscal(n, *(double*) get_cste_ptr(alpha), get_ptr(x), incx); break;
+                case dscal:  cblas_dscal(n, *(double*) get_cste_ptr(alpha), get_ptr(x), incx); break;
+                case cscal:  cblas_cscal(n,            get_cste_ptr(alpha), get_ptr(x), incx); break;
+                case zscal:  cblas_zscal(n,            get_cste_ptr(alpha), get_ptr(x), incx); break;
+                case csscal: cblas_sscal(n, *(double*) get_cste_ptr(alpha), get_ptr(x), incx); break;
+                case zdscal: cblas_dscal(n, *(double*) get_cste_ptr(alpha), get_ptr(x), incx); break;
+                default: error = -2; break;
+            }
+            
+        break;}
+
+        
 
 
         default:
