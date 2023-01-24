@@ -25,6 +25,9 @@ _copy
 _swap
 _scal
 _dot
+_nrm2
+_asum
+i_amax
 
 Todo
 ----
@@ -32,7 +35,4 @@ _rot
 _rotg
 _rotm
 _rotmg
-_nrm2
-_asum
-i_amax
 
