@@ -424,10 +424,28 @@ ERL_NIF_TERM unwrapper(ErlNifEnv* env, int argc, const ERL_NIF_TERM* argv){
                 && !(error = in_bounds(type, n, incx, x)) && !(error = in_bounds(type, n, incy, y))
             )
             switch(hash_name){
-                case srot:  cblas_srot(n, get_ptr(x), incx, get_ptr(y), incy, *(float*)  get_cste_ptr(c), *(float*)  get_cste_ptr(s)); break;
-                case drot:  cblas_drot(n, get_ptr(x), incx, get_ptr(y), incy, *(double*) get_cste_ptr(c), *(double*) get_cste_ptr(s)) ; break;
+                case srot:  cblas_srot(n, get_ptr(x),  incx, get_ptr(y), incy, *(float*)  get_cste_ptr(c), *(float*)  get_cste_ptr(s)); break;
+                case drot:  cblas_drot(n, get_ptr(x),  incx, get_ptr(y), incy, *(double*) get_cste_ptr(c), *(double*) get_cste_ptr(s)); break;
                 case csrot: cblas_csrot(n, get_ptr(x), incx, get_ptr(y), incy, *(float*)  get_cste_ptr(c), *(float*)  get_cste_ptr(s)); break;
                 case zdrot: cblas_zdrot(n, get_ptr(x), incx, get_ptr(y), incy, *(double*) get_cste_ptr(c), *(double*) get_cste_ptr(s)); break;
+                default: error = -2; break;
+            }
+            
+        break;}
+
+        case srotg: case drotg: case crotg: case zrotg:  {
+            c_binary a; c_binary b; c_binary c; c_binary s;
+            bytes_sizes type = pick_size(hash_name, (blas_names []){srotg, drotg, crotg, zrotg, blas_name_end}, (bytes_sizes[]){s_bytes, d_bytes, c_bytes, z_bytes, no_bytes});
+            
+            if( !(error = narg == 4? 0:21)
+                && !(error = translate(env, elements, (etypes[]) {e_ptr, e_ptr, e_ptr, e_ptr, e_end}, &a, &b, &c, &s))
+                && !(error = in_bounds(type, 1, 1, a)) && !(error = in_bounds(type, 1, 1, b)) && !(error = in_bounds(type, 1, 1, c)) && !(error = in_bounds(type, 1, 1, s))
+            )
+            switch(hash_name){
+                case srotg: cblas_srotg(get_ptr(a), get_ptr(b), get_ptr(c), get_ptr(s));  break;
+                case drotg: cblas_drotg(get_ptr(a), get_ptr(b), get_ptr(c), get_ptr(s)); break;
+                case crotg: cblas_crotg(get_ptr(a), get_ptr(b), get_ptr(c), get_ptr(s)); break;
+                case zrotg: cblas_zrotg(get_ptr(a), get_ptr(b), get_ptr(c), get_ptr(s)); break;
                 default: error = -2; break;
             }
             
