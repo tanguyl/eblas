@@ -136,27 +136,48 @@ int in_cste_bounds(int elem_size, int n_elem, int inc, cste_c_binary b){
     return (elem_size > 0 && end_offset >= 0 && end_offset <= b.size)?0:20;
 }
 
-void set_cste_c_binary(cste_c_binary *ccb, bytes_sizes type, unsigned char* ptr){
-    ccb->size   = type;
+void set_cste_c_binary(cste_c_binary *ccb, etypes type, unsigned char* ptr){
+    //e_int, e_double, e_float_complex, e_double_complex, 
+    switch(type){
+        case e_int:            ccb->size = sizeof(int);        break;
+        case e_double:         ccb->size = sizeof(double);     break;
+        case e_float_complex:  ccb->size = sizeof(float)*2;    break;
+        case e_double_complex: ccb->size = sizeof(double)*2;   break;
+        default:               ccb->size = 0;                  break;
+    }
+
+    ccb->type   = type;
     ccb->offset = 0;
     ccb->ptr    = ptr;
 }
 
 ERL_NIF_TERM cste_c_binary_to_term(ErlNifEnv* env, cste_c_binary ccb){
-    ErlNifBinary bin;
-    ERL_NIF_TERM result;
+    ERL_NIF_TERM result = -1;
 
-    debug_write("Creating binarry...\n");
-    if(enif_alloc_binary(ccb.size, &bin)){
-        memcpy(bin.data, ccb.ptr, ccb.size);
-        debug_write("FInished copying!\n");
-        if((result = enif_make_binary(env, &bin)))
-            return result;
-        else
-            enif_release_binary(&bin);
+    switch(ccb.type){
+        case e_int:     int    vali = *(int*)    ccb.ptr; result = enif_make_int(env, vali);    break;
+        case e_double:  double vald = *(double*) ccb.ptr; result = enif_make_double(env, vald); break;
+
+        case e_float_complex:
+        case e_double_complex:
+             ErlNifBinary bin;
+
+            debug_write("Creating binarry...\n");
+            if(enif_alloc_binary(ccb.size, &bin)){
+                memcpy(bin.data, ccb.ptr, ccb.size);
+                debug_write("Finished copying!\n");
+                if(!(result = enif_make_binary(env, &bin))){
+                    enif_release_binary(&bin);
+                    result = enif_make_badarg(env);
+                }
+            }
+        break;
+
+        default:
+            result = enif_make_badarg(env);
+        break;
     }
-
-    return enif_make_badarg(env);
+    return result;
 }
 
 
@@ -326,13 +347,13 @@ ERL_NIF_TERM unwrapper(ErlNifEnv* env, int argc, const ERL_NIF_TERM* argv){
                 && !(error = in_cste_bounds(type, n, incx, x) ) && !(error = in_cste_bounds(type, n, incy, y))
             ){
                 switch(hash_name){
-                    case sdot:                   float  f_result  = cblas_sdot (n, get_cste_ptr(x), incx, get_cste_ptr(y), incy); set_cste_c_binary(&dot_result, type, (unsigned char*) &f_result);  break;
-                    case ddot:                   double d_result  = cblas_ddot (n, get_cste_ptr(x), incx, get_cste_ptr(y), incy); set_cste_c_binary(&dot_result, type, (unsigned char*) &d_result);  break;
-                    case dsdot:                  double ds_result = cblas_dsdot(n, get_cste_ptr(x), incx, get_cste_ptr(y), incy); set_cste_c_binary(&dot_result, type, (unsigned char*) &ds_result); break;
-                    case cdotu: openblas_complex_float  c_result  = cblas_cdotu(n, get_cste_ptr(x), incx, get_cste_ptr(y), incy); set_cste_c_binary(&dot_result, type, (unsigned char*) &c_result);  break;
-                    case zdotu: openblas_complex_double z_result  = cblas_zdotu(n, get_cste_ptr(x), incx, get_cste_ptr(y), incy); set_cste_c_binary(&dot_result, type, (unsigned char*) &z_result);  break;
-                    case cdotc: openblas_complex_float  cd_result = cblas_cdotc(n, get_cste_ptr(x), incx, get_cste_ptr(y), incy); set_cste_c_binary(&dot_result, type, (unsigned char*) &cd_result); break;
-                    case zdotc: openblas_complex_double zd_result = cblas_zdotc(n, get_cste_ptr(x), incx, get_cste_ptr(y), incy); set_cste_c_binary(&dot_result, type, (unsigned char*) &zd_result); break;
+                    case sdot:                   double f_result  = cblas_sdot (n, get_cste_ptr(x), incx, get_cste_ptr(y), incy); set_cste_c_binary(&dot_result, e_double, (unsigned char*) &f_result);  break;
+                    case ddot:                   double d_result  = cblas_ddot (n, get_cste_ptr(x), incx, get_cste_ptr(y), incy); set_cste_c_binary(&dot_result, e_double, (unsigned char*) &d_result);  break;
+                    case dsdot:                  double ds_result = cblas_dsdot(n, get_cste_ptr(x), incx, get_cste_ptr(y), incy); set_cste_c_binary(&dot_result, e_double, (unsigned char*) &ds_result); break;
+                    case cdotu: openblas_complex_float  c_result  = cblas_cdotu(n, get_cste_ptr(x), incx, get_cste_ptr(y), incy); set_cste_c_binary(&dot_result, e_float_complex,  (unsigned char*) &c_result);  break;
+                    case zdotu: openblas_complex_double z_result  = cblas_zdotu(n, get_cste_ptr(x), incx, get_cste_ptr(y), incy); set_cste_c_binary(&dot_result, e_double_complex, (unsigned char*) &z_result);  break;
+                    case cdotc: openblas_complex_float  cd_result = cblas_cdotc(n, get_cste_ptr(x), incx, get_cste_ptr(y), incy); set_cste_c_binary(&dot_result, e_float_complex,  (unsigned char*) &cd_result); break;
+                    case zdotc: openblas_complex_double zd_result = cblas_zdotc(n, get_cste_ptr(x), incx, get_cste_ptr(y), incy); set_cste_c_binary(&dot_result, e_double_complex, (unsigned char*) &zd_result); break;
                     default: error = -2; break;
                 }
 
@@ -351,7 +372,7 @@ ERL_NIF_TERM unwrapper(ErlNifEnv* env, int argc, const ERL_NIF_TERM* argv){
                 && !(error = translate(env, elements, (etypes[]) {e_int, e_cste_ptr, e_cste_ptr, e_int, e_cste_ptr, e_int, e_end}, &n, &b, &x, &incx, &y, &incy))
                 && !(error = in_cste_bounds(type, n, incx, x) ) && !(error = in_cste_bounds(type, n, incy, y))
             ){
-                float f_result  = cblas_sdsdot (n, *(double*) get_cste_ptr(b), get_cste_ptr(x), incx, get_cste_ptr(y), incy); set_cste_c_binary(&dot_result, type, (unsigned char*) &f_result);
+                double f_result  = cblas_sdsdot (n, *(double*) get_cste_ptr(b), get_cste_ptr(x), incx, get_cste_ptr(y), incy); set_cste_c_binary(&dot_result, e_double, (unsigned char*) &f_result);
                 result = cste_c_binary_to_term(env, dot_result);
             }
         break;}
@@ -359,7 +380,7 @@ ERL_NIF_TERM unwrapper(ErlNifEnv* env, int argc, const ERL_NIF_TERM* argv){
         case snrm2: case dnrm2: case scnrm2: case dznrm2: case sasum: case dasum: case scasum: case dzasum: case isamax: case idamax: case icamax: case izamax:  {
             cste_c_binary nrm2_result;
             double d_result;
-            float  f_result;
+            int i_result;
 
             int n;  cste_c_binary x; int incx;
             bytes_sizes type;
@@ -375,18 +396,18 @@ ERL_NIF_TERM unwrapper(ErlNifEnv* env, int argc, const ERL_NIF_TERM* argv){
                 && !(error = in_cste_bounds(type, n, incx, x))
             ){
                 switch(hash_name){
-                    case snrm2:  f_result  = cblas_snrm2 (n, get_cste_ptr(x), incx); set_cste_c_binary(&nrm2_result, s_bytes, (unsigned char*) &f_result);  break;
-                    case scnrm2: f_result  = cblas_scnrm2(n, get_cste_ptr(x), incx); set_cste_c_binary(&nrm2_result, s_bytes, (unsigned char*) &f_result);  break;
-                    case sasum:  f_result  = cblas_sasum (n, get_cste_ptr(x), incx); set_cste_c_binary(&nrm2_result, s_bytes, (unsigned char*) &f_result);  break;
-                    case scasum: f_result  = cblas_scasum(n, get_cste_ptr(x), incx); set_cste_c_binary(&nrm2_result, s_bytes, (unsigned char*) &f_result);  break;
-                    case isamax: f_result  = cblas_isamax(n, get_cste_ptr(x), incx); set_cste_c_binary(&nrm2_result, s_bytes, (unsigned char*) &f_result);  break;
-                    case icamax: f_result  = cblas_icamax(n, get_cste_ptr(x), incx); set_cste_c_binary(&nrm2_result, s_bytes, (unsigned char*) &f_result);  break;
-                    case dnrm2:  d_result  = cblas_dnrm2 (n, get_cste_ptr(x), incx); set_cste_c_binary(&nrm2_result, d_bytes, (unsigned char*) &d_result);  break;
-                    case dznrm2: d_result  = cblas_dznrm2(n, get_cste_ptr(x), incx); set_cste_c_binary(&nrm2_result, d_bytes, (unsigned char*) &d_result);  break;
-                    case dasum:  d_result  = cblas_dasum (n, get_cste_ptr(x), incx); set_cste_c_binary(&nrm2_result, d_bytes, (unsigned char*) &d_result);  break;
-                    case dzasum: d_result  = cblas_dzasum(n, get_cste_ptr(x), incx); set_cste_c_binary(&nrm2_result, d_bytes, (unsigned char*) &d_result);  break;
-                    case idamax: f_result  = cblas_idamax(n, get_cste_ptr(x), incx); set_cste_c_binary(&nrm2_result, d_bytes, (unsigned char*) &d_result);  break;
-                    case izamax: d_result  = cblas_izamax(n, get_cste_ptr(x), incx); set_cste_c_binary(&nrm2_result, d_bytes, (unsigned char*) &d_result);  break;
+                    case snrm2:  d_result  = cblas_snrm2 (n, get_cste_ptr(x), incx); set_cste_c_binary(&nrm2_result, e_double, (unsigned char*) &d_result);  break;
+                    case dnrm2:  d_result  = cblas_dnrm2 (n, get_cste_ptr(x), incx); set_cste_c_binary(&nrm2_result, e_double, (unsigned char*) &d_result);  break;
+                    case scnrm2: d_result  = cblas_scnrm2(n, get_cste_ptr(x), incx); set_cste_c_binary(&nrm2_result, e_double, (unsigned char*) &d_result);  break;
+                    case dznrm2: d_result  = cblas_dznrm2(n, get_cste_ptr(x), incx); set_cste_c_binary(&nrm2_result, e_double, (unsigned char*) &d_result);  break;
+                    case dasum:  d_result  = cblas_dasum (n, get_cste_ptr(x), incx); set_cste_c_binary(&nrm2_result, e_double, (unsigned char*) &d_result);  break;
+                    case sasum:  d_result  = cblas_sasum (n, get_cste_ptr(x), incx); set_cste_c_binary(&nrm2_result, e_double, (unsigned char*) &d_result);  break;
+                    case scasum: d_result  = cblas_scasum(n, get_cste_ptr(x), incx); set_cste_c_binary(&nrm2_result, e_double, (unsigned char*) &d_result);  break;
+                    case dzasum: d_result  = cblas_dzasum(n, get_cste_ptr(x), incx); set_cste_c_binary(&nrm2_result, e_double, (unsigned char*) &d_result);  break;
+                    case isamax: i_result  = cblas_isamax(n, get_cste_ptr(x), incx); set_cste_c_binary(&nrm2_result, e_int, (unsigned char*) &i_result);  break;
+                    case idamax: i_result  = cblas_idamax(n, get_cste_ptr(x), incx); set_cste_c_binary(&nrm2_result, e_int, (unsigned char*) &i_result);  break;
+                    case icamax: i_result  = cblas_icamax(n, get_cste_ptr(x), incx); set_cste_c_binary(&nrm2_result, e_int, (unsigned char*) &i_result);  break;
+                    case izamax: i_result  = cblas_izamax(n, get_cste_ptr(x), incx); set_cste_c_binary(&nrm2_result, e_int, (unsigned char*) &i_result);  break;
                     default: error = -2; break;
                 }
                 result = cste_c_binary_to_term(env, nrm2_result);

@@ -4,7 +4,7 @@
 #include <cblas.h>
 
 // Types translator
-typedef enum types {e_int, e_lint, e_float, e_double, e_ptr, e_cste_ptr, e_end} etypes;
+typedef enum types {e_int, e_lint, e_float, e_double, e_ptr, e_cste_ptr, e_float_complex, e_double_complex, e_end} etypes;
 int translate(ErlNifEnv* env, const ERL_NIF_TERM* terms, const etypes* format, ...);
 
 
@@ -28,13 +28,14 @@ typedef struct{
     unsigned int offset;
     const unsigned char* ptr;
     double tmp;
+    etypes type;
 } cste_c_binary;
 
 inline const void* get_cste_ptr(cste_c_binary cb){return (void*) cb.ptr + cb.offset;}
 int get_cste_binary(ErlNifEnv* env, const ERL_NIF_TERM term, cste_c_binary* result);
 int in_cste_bounds(int elem_size, int n_elem, int inc, cste_c_binary b);
 
-void set_cste_c_binary(cste_c_binary* ccb, bytes_sizes size, unsigned char* ptr);
+void set_cste_c_binary(cste_c_binary* ccb, etypes type, unsigned char* ptr);
 ERL_NIF_TERM cste_c_binary_to_term(ErlNifEnv* env, cste_c_binary ccb);
 
 
