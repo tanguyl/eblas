@@ -1,28 +1,47 @@
 eblas
 =====
 
-An OTP library, created to wrap cblas.
+This early draft consists is a CBLAS wrapper. It features scheduling control (execution in dirty/clean nifs), as well as type checking, and array overflow detection (to avoid sigsev related crashes).
 
-Build
+
+Usage
 -----
 
-    $ rebar3 compile
+sasum example:
 
-Usage examples
-----
 ```erlang
-Xs = eblas:new(chain:ltb(s, [1, 2, 3, 4])),
-Ys = eblas:new(chain:ltb(s, [0,0,0,0])),
-eblas:run({sdot, 3, Xs, 1, Ys, 1}),
-eblas:run({sdsdot, 3, 5.0, Xs, 1, Ys, 1}),
-eblas:run({saxpy, 3, 1.0, Xs, 1, Ys, 1}).
+Bin = chain:ltb(s, [1,2,4,3]),  
+% ltb(T, L):
+% transforms list L into a binary,
+% using encoding T: s->single, d->double,
+%                   c->single complex
+%                   z->single double
 
-f().
-Ptr = eblas:new(chain:ltb(s, [2,1,0,0])),
-Args = lists:map(fun(S)->eblas:shift(S*4, Ptr) end, lists:seq(0,3)),
-eblas:run(list_to_tuple([srotg] ++ Args)),
-chain:btl(s, eblas:to_bin(Ptr)).
+Ptr = eblas:new(Bin),           
+% new(Binary):
+% creates a mutable c binary, of initial
+% content Bin.
 
+Sum = eblas:run({sasum, 4, Ptr, 1 }).
+% run({Blas_fct_name, arg0, arg1,...}).
+% Executes blas Blas_fct_name with given arguments.
+```
+
+caxpy example:
+
+```erlang
+% List representation of X,Y,A
+[X,Y,A]   =  [[1,2,1,3,1,4],[3,2,3,4,3,6],[1,0]],
+% Binary representation of X,Y,A
+[Xb,Yb,Ab] = lists:map(fun(L)->chain:ltb(c, L) end, [X,Y,A]),
+% C_Binary representation of X,Y,A
+[Xc,Yc,Ac] = lists:map(fun eblas:new/1, [Xb,Yb,Ab]),
+
+ok    = eblas:run({caxpy, 3, Ac, Xc, 1, Yc, 1}),
+
+% Reset Yc
+eblas:copy(Yb, Yc),
+ok    = eblas:run({caxpy, 3, Ab, Xb, 1, Yc, 1}).
 ```
 
 Available
